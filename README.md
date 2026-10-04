@@ -4,12 +4,12 @@ Bitácora web, en español y pensada para celular, para pronosticar la carga de 
 
 ## Qué hace
 
-- Guarda un rango de RPE esperado y la duración prevista; muestra la carga pronosticada como `RPE × minutos`.
+- Guarda un único RPE pronosticado y la duración prevista; muestra la carga pronosticada como `RPE × minutos`.
 - Permite cerrar la sesión con el RPE reportado por el deportista o alumno y la duración real.
-- Indica si la carga real quedó dentro del rango anticipado.
+- Compara la carga pronosticada con la real y calcula el error absoluto en unidades `RPE × minutos`.
 - Mantiene historiales separados por persona y tipo de sesión.
-- Después de dos sesiones cerradas del mismo tipo para la misma persona, propone un rango con la media de las cargas reales recientes ± su desviación absoluta media. Usa hasta las últimas cinco sesiones. La propuesta es descriptiva y el entrenador decide si la usa.
-- Incluye una gráfica del historial de carga, resúmenes por persona, exportación e importación JSON y guardado local.
+- Después de dos sesiones cerradas del mismo tipo para la misma persona, propone un RPE que representa la carga real media de hasta las últimas cinco sesiones dividida por los minutos previstos. La propuesta es descriptiva y el entrenador decide si la usa.
+- Grafica carga pronosticada y real a lo largo del tiempo; incluye resúmenes por persona, exportación/importación CSV, respaldo JSON y guardado local.
 - Puede instalarse como PWA y conservar el armazón de la aplicación sin conexión tras la primera visita.
 
 ## Privacidad y límites
@@ -30,9 +30,13 @@ python3 -m http.server 8000
 
 Luego visita `http://localhost:8000`.
 
-## Pruebas de cálculo
+## CSV y respaldos
 
-Con Node.js instalado, ejecuta `node --test domain.test.js` para revisar la multiplicación Foster, la validación de entradas, el cierre dentro/fuera del rango y el cálculo de sugerencias.
+El CSV de Carga Clara usa las columnas `id`, `persona_id`, `persona`, `tipo_sesion`, `fecha_sesion`, `rpe_pronosticado`, `minutos_previstos`, `carga_pronosticada`, `estado`, `rpe_reportado`, `minutos_reales`, `carga_real`, `creado_en` y `cerrado_en`. Al importar, se agregan sesiones nuevas y se omiten IDs ya existentes. Acepta separador por coma o punto y coma. Los pronósticos con rangos de versiones previas se conservan mediante su punto medio.
+
+## Pruebas
+
+Con Node.js instalado, ejecuta `node --test domain.test.js` para revisar la carga de Foster, el error del pronóstico, la sugerencia de RPE, la migración y el intercambio CSV.
 
 ## GitHub Pages
 

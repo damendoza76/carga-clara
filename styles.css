@@ -3,3 +3,10 @@
 @media(max-width:700px){.app-shell{padding:0 15px 95px}.topbar{height:67px}main{padding-top:16px}.hero{padding:22px 19px;border-radius:23px}.hero-actions{flex-direction:column}.hero-actions .button{width:100%}.grid.two,.grid.three{grid-template-columns:1fr 1fr;gap:10px}.card{padding:16px;border-radius:19px}.stat-card{min-height:98px}.stat{font-size:26px}.grid.three .card:last-child{grid-column:span 2}.result-form{align-items:stretch;flex-wrap:wrap}.result-form .field{min-width:calc(50% - 6px)}.result-form .button{width:100%}.session-top{align-items:flex-start}.filters{display:grid;grid-template-columns:1fr 1fr}.filters .control{width:100%;min-width:0}.nav-item{min-width:57px;padding:6px 9px}.brand small{font-size:9px}}
 @media(max-width:390px){.grid.two,.grid.three{grid-template-columns:1fr 1fr}.result-form .field{min-width:100%}.session-top{display:block}.session-top .tag{margin-top:8px}.row{gap:8px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+.chart-wrap{height:225px}
+.chart-actual-line{fill:none;stroke:var(--green);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.chart-dot.actual-dot{stroke:var(--green)}
+.bar-bg span.error-bar{background:#b47716}
+.actual-result{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:11px;color:var(--muted);font-size:12px}
+.error-pill{border-radius:99px;padding:5px 9px;background:var(--amber-wash);color:var(--amber-dark);font:11px var(--mono)}
+.button:disabled{opacity:.5;cursor:not-allowed;transform:none}
