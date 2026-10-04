@@ -1,6 +1,7 @@
 (() => {
   'use strict';
   const KEY = 'carga-clara.v1';
+  const Domain = window.CargaClaraDomain;
   const state = load();
   let view = 'hoy';
   let toastTimer;
@@ -37,11 +38,10 @@
   }
   function athleteOptions(selected=''){ return state.people.map(p=>`<option value="${safe(p.id)}" ${selected===p.id?'selected':''}>${safe(p.name)}</option>`).join(''); }
   function makeSuggestion(personId,type,minutes){
-    const history=matchingHistory(personId,type).slice(-5); if(history.length<2) return null;
-    const values=history.map(s=>Number(s.actualLoad)); const mean=values.reduce((a,b)=>a+b,0)/values.length;
-    const mad=values.reduce((a,b)=>a+Math.abs(b-mean),0)/values.length;
-    const low=Math.max(0,mean-mad), high=mean+mad;
-    return {low,high,rpeLow:Math.max(0,Math.min(10,low/minutes)),rpeHigh:Math.max(0,Math.min(10,high/minutes)),count:history.length};
+    const history=matchingHistory(personId,type).slice(-5); const band=Domain.suggestLoadBand(history.map(s=>Number(s.actualLoad)));
+    if(!band) return null;
+    const rpeBand=Domain.loadBandToRpe(band,minutes);
+    return {...band,...rpeBand,count:history.length};
   }
   function forecast(){
     const noPeople=state.people.length===0;
@@ -103,8 +103,8 @@
     const s=state.sessions.find(x=>x.id===id);if(!s||s.status==='closed')return;
     const rpe=Number(form.get('rpe')),minutes=Number(form.get('minutes'));
     if(!Number.isFinite(rpe)||rpe<0||rpe>10||!Number.isFinite(minutes)||minutes<1){notify('Revisa el RPE y los minutos.');return;}
-    const actualLoad=rpe*minutes;
-    s.status='closed';s.actualRpe=rpe;s.actualMinutes=minutes;s.actualLoad=actualLoad;s.closedAt=new Date().toISOString();s.covered=actualLoad>=s.predictedLoadLow&&actualLoad<=s.predictedLoadHigh;
+    const actualLoad=Domain.calculateLoad(rpe,minutes);
+    s.status='closed';s.actualRpe=rpe;s.actualMinutes=minutes;s.actualLoad=actualLoad;s.closedAt=new Date().toISOString();s.covered=Domain.isWithinBand(actualLoad,s.predictedLoadLow,s.predictedLoadHigh);
     save();render();notify(s.covered?'Resultado dentro del rango.':'Resultado guardado; quedó fuera del rango.');
   }
   function bindForecast(){
@@ -122,7 +122,7 @@
     $('#addPerson').addEventListener('click',()=>addPerson());
     form.addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(form),low=Number(fd.get('rpeLow')),high=Number(fd.get('rpeHigh')),minutes=Number(fd.get('plannedMinutes'));
       if(low>high){notify('El RPE inicial debe ser menor que el final.');return;}
-      const session={id:uid(),personId:fd.get('person'),type:String(fd.get('type')).trim(),predictedRpeLow:low,predictedRpeHigh:high,plannedMinutes:minutes,predictedLoadLow:low*minutes,predictedLoadHigh:high*minutes,date:fd.get('date'),createdAt:new Date().toISOString(),status:'pending'};
+    const session={id:uid(),personId:fd.get('person'),type:String(fd.get('type')).trim(),predictedRpeLow:low,predictedRpeHigh:high,plannedMinutes:minutes,predictedLoadLow:Domain.calculateLoad(low,minutes),predictedLoadHigh:Domain.calculateLoad(high,minutes),date:fd.get('date'),createdAt:new Date().toISOString(),status:'pending'};
       state.sessions.push(session);save();view='hoy';$$('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.view===view));render();notify('Pronóstico guardado antes de la sesión.');
     });
   }

@@ -26,6 +26,10 @@ python3 -m http.server 8000
 
 Luego visita `http://localhost:8000`.
 
+## Pruebas de cálculo
+
+Con Node.js instalado, ejecuta `node --test domain.test.js` para revisar la multiplicación Foster, la validación de entradas, el cierre dentro/fuera del rango y el cálculo de sugerencias.
+
 ## Publicar en GitHub Pages
 
 1. Crea un repositorio nuevo en GitHub llamado `carga-clara`.
