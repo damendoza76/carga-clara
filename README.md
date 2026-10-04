@@ -16,6 +16,10 @@ Bitácora web, en español y pensada para celular, para pronosticar la carga de 
 
 Los registros permanecen en el almacenamiento local del navegador. No hay cuenta, servidor ni sincronización automática. Exporta un respaldo para trasladar información a otro navegador o dispositivo. La fórmula de Foster cuantifica carga interna percibida; esta app no predice lesiones.
 
+## Licencia
+
+Carga Clara se distribuye con la licencia MIT. Puedes usar, copiar, modificar, publicar y distribuir el software, incluso con fines comerciales, siempre que conserves el aviso de copyright y el texto de la licencia. Se ofrece sin garantía; consulta el archivo [LICENSE](LICENSE).
+
 ## Abrir localmente
 
 Para probar funciones de instalación y modo sin conexión, sirve esta carpeta desde un servidor local (los service workers no funcionan al abrir el archivo directamente):
@@ -30,11 +34,8 @@ Luego visita `http://localhost:8000`.
 
 Con Node.js instalado, ejecuta `node --test domain.test.js` para revisar la multiplicación Foster, la validación de entradas, el cierre dentro/fuera del rango y el cálculo de sugerencias.
 
-## Publicar en GitHub Pages
+## GitHub Pages
 
-1. Crea un repositorio nuevo en GitHub llamado `carga-clara`.
-2. Sube el contenido de esta carpeta a la rama `main`.
-3. En **Settings → Pages**, selecciona **Deploy from a branch**, la rama `main` y la carpeta `/ (root)`.
-4. Guarda y espera a que GitHub Pages publique el sitio.
+El sitio de este repositorio se publica desde la rama `main` y la carpeta raíz. Su dirección es `https://damendoza76.github.io/carga-clara/`.
 
-Si el repositorio se llama `carga-clara`, la URL suele quedar bajo `https://USUARIO.github.io/carga-clara/`. No hay compilación ni dependencias que instalar.
+No hay compilación ni dependencias que instalar. Cada actualización en `main` inicia una nueva publicación.
