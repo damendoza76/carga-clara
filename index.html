@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f1e8">
+  <meta name="description" content="Pronostica la carga de sesión, compárala con el RPE reportado y afina tu criterio con el tiempo.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <title>Carga Clara · Bitácora de entrenamiento</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#hoy" aria-label="Carga Clara, inicio">
+        <span class="brand-mark" aria-hidden="true">↗</span>
+        <span><strong>Carga Clara</strong><small>bitácora de entrenamiento</small></span>
+      </a>
+      <button class="icon-button" id="settingsShortcut" aria-label="Abrir ajustes" title="Ajustes">⚙</button>
+    </header>
+
+    <main id="mainContent" tabindex="-1"></main>
+
+    <nav class="bottom-nav" aria-label="Navegación principal">
+      <button class="nav-item active" data-view="hoy"><span>◷</span>Hoy</button>
+      <button class="nav-item" data-view="anotar"><span>＋</span>Anotar</button>
+      <button class="nav-item" data-view="historial"><span>▤</span>Historial</button>
+      <button class="nav-item" data-view="metricas"><span>⌁</span>Métricas</button>
+    </nav>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
