@@ -21,6 +21,7 @@
   }
   function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
   function fmt(value) { return Math.round(Number(value) || 0).toLocaleString('es-CO'); }
+  function fmtLoad(value) { return Number(value).toLocaleString('es-CO', { maximumFractionDigits: 1 }); }
   function fmtRpe(value) { return Number(value).toLocaleString('es-CO', { maximumFractionDigits: 1 }); }
   function dateLabel(value) {
     if (!value) return '';
@@ -35,7 +36,7 @@
   function pending() { return state.sessions.filter(session => session.status === 'pending').sort((a, b) => a.date.localeCompare(b.date)); }
   function matchingHistory(personId, type) {
     return closed().filter(session => session.personId === personId && session.type.toLowerCase() === type.toLowerCase())
-      .sort((a, b) => (a.closedAt || a.createdAt).localeCompare(b.closedAt || b.createdAt));
+      .sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.closedAt || a.createdAt).localeCompare(b.closedAt || b.createdAt));
   }
   function notify(message) {
     const element = $('#toast'); element.textContent = message; element.classList.add('show');
@@ -79,10 +80,11 @@
     return state.people.map(person => `<option value="${safe(person.id)}" ${selected === person.id ? 'selected' : ''}>${safe(person.name)}</option>`).join('');
   }
   function makeSuggestion(personId, type, minutes) {
-    const history = matchingHistory(personId, type).slice(-5);
-    const estimate = Domain.suggestLoad(history.map(session => Number(session.actualLoad)));
-    if (!estimate) return null;
-    return { ...estimate, rpe: Domain.loadToRpe(estimate.load, minutes) };
+    const history = matchingHistory(personId, type);
+    if (!history.length) return null;
+    const updates = Domain.beliefUpdates(history);
+    const latest = updates[updates.length - 1];
+    return { load: latest.updated, prior: latest.prior, actual: latest.actual, n: latest.n, count: history.length, rpe: Domain.loadToRpe(latest.updated, minutes) };
   }
   function forecast() {
     const noPeople = state.people.length === 0;
@@ -131,7 +133,7 @@
       <div class="grid two"><article class="card"><div class="eyebrow">Error medio de carga</div><div class="metric-number">${meanError === null ? '—' : fmt(meanError)}</div><div class="metric-caption">unidades RPE × minutos · ${sessions.length} sesiones</div></article><article class="card"><div class="eyebrow">Pronósticos cerrados</div><div class="metric-number">${sessions.length}</div><div class="metric-caption">${state.sessions.filter(session => session.status === 'pending').length} todavía por cerrar</div></article></div>
       <section class="section card"><div class="section-title"><h2>Carga pronosticada y real</h2><span class="tag green">últimas 12</span></div>${chart}</section>
       <section class="section card"><div class="section-title"><h2>Error medio por persona</h2></div>${byPerson.length ? byPerson.map(item => { const error = Domain.meanAbsoluteError(item.sessions) || 0; const width = Math.max(error === 0 ? 2 : 4, error / largestPersonError * 100); return `<div class="bar-row"><span>${safe(item.person.name)}</span><div class="bar-bg"><span class="error-bar" style="width:${width}%"></span></div><b class="mono">${fmt(error)} u</b></div><div class="help">${item.sessions.length} sesiones · ${[...new Set(item.sessions.map(session => session.type))].map(safe).join(', ')}</div>`; }).join('') : '<div class="empty"><strong>Cuando cierres sesiones, verás el resumen por persona.</strong>El historial se separa por tipo de sesión para comparar cargas parecidas.</div>'}</section>
-      <div class="notice"><b>Cómo se sugiere el próximo RPE:</b> para la misma persona y tipo de sesión, con dos o más registros cerrados, la app propone la carga real media de hasta las últimas cinco sesiones y la divide por los minutos previstos. Es una referencia descriptiva; tú decides si la usas.</div>`;
+      <div class="notice"><b>Cómo se actualiza la recomendación:</b> para cada persona y tipo de sesión, la app parte de las cargas reales y actualiza la expectativa en orden cronológico: expectativa anterior + (1/n) × (carga real − expectativa anterior). Aquí n es el número de la sesión comparable; se usan todos los registros cerrados.</div>`;
   }
 
   function settingsView() {
@@ -175,11 +177,11 @@
       const suggestion = personId && type && minutes > 0 ? makeSuggestion(personId, type, minutes) : null;
       if (!suggestion) {
         const count = personId && type ? matchingHistory(personId, type).length : 0;
-        box.innerHTML = count === 1 ? '<div class="suggestion">Hay una sesión cerrada de este tipo. Después de otra aparecerá una sugerencia de RPE basada en el promedio.</div>' : count === 0 && personId && type ? '<div class="suggestion">Todavía no hay sesiones comparables. Registra el primer pronóstico para crear tu punto de partida.</div>' : '';
+        box.innerHTML = count === 0 && personId && type ? '<div class="suggestion">Todavía no hay sesiones comparables. Cuando cierres la primera, tendrás una recomendación inicial para la siguiente.</div>' : '';
         return;
       }
       const unusable = suggestion.rpe > 10;
-      box.innerHTML = `<div class="suggestion"><b>Promedio de las últimas ${suggestion.count} sesiones:</b> ${fmt(suggestion.load)} unidades; equivale a RPE ${fmtRpe(suggestion.rpe)} para ${minutes} min.${unusable ? ' Aumenta los minutos previstos para que la sugerencia corresponda a la escala RPE 0–10.' : ''}<button type="button" id="applySuggestion" ${unusable ? 'disabled' : ''}>Usar este RPE</button></div>`;
+      box.innerHTML = `<div class="suggestion"><b>Para la próxima sesión: ${fmtLoad(suggestion.load)} unidades</b><div class="help">Actualización ${fmtLoad(suggestion.prior)} + (1/${suggestion.n}) × (${fmtLoad(suggestion.actual)} − ${fmtLoad(suggestion.prior)}) = ${fmtLoad(suggestion.load)} · ${suggestion.count} sesiones comparables.</div><div class="help">Equivale aproximadamente a RPE ${fmtRpe(suggestion.rpe)} para ${minutes} min. Al usarlo, se aproxima al paso de 0,5 del campo RPE.${unusable ? ' Aumenta los minutos previstos para que la sugerencia corresponda a la escala RPE 0–10.' : ''}</div><button type="button" id="applySuggestion" ${unusable ? 'disabled' : ''}>Usar este RPE</button></div>`;
       if (!unusable) $('#applySuggestion').addEventListener('click', () => { $('#rpePrediction').value = Math.round(suggestion.rpe * 2) / 2; update(); });
     };
     ['input', 'change'].forEach(eventName => ['#rpePrediction', '#plannedMinutes', '#person', '#type'].forEach(selector => $(selector)?.addEventListener(eventName, update)));

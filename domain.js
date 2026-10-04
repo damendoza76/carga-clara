@@ -17,10 +17,20 @@
     if (!pairs.length) return null;
     return pairs.reduce((sum, s) => sum + absoluteError(s.predictedLoad, s.actualLoad), 0) / pairs.length;
   };
-  const suggestLoad = (loads, windowSize = 5) => {
-    const values = loads.map(Number).filter(Number.isFinite).slice(-windowSize);
-    if (values.length < 2) return null;
-    return { load: values.reduce((sum, value) => sum + value, 0) / values.length, count: values.length };
+  const updateBelief = (prior, actual, sessionNumber) => {
+    const n = Number(sessionNumber), previous = Number(prior), observed = Number(actual);
+    if (!Number.isInteger(n) || n < 1 || !Number.isFinite(previous) || !Number.isFinite(observed)) throw new RangeError('Prior, actual load, and a positive whole session number must be valid.');
+    return previous + (1 / n) * (observed - previous);
+  };
+  const beliefUpdates = (sessions) => {
+    if (!sessions.length) return [];
+    let belief = Number(sessions[0].actualLoad);
+    if (!Number.isFinite(belief)) throw new RangeError('Every session must have a valid actual load.');
+    return sessions.map((session, index) => {
+      const n = index + 1, actual = Number(session.actualLoad), prior = belief;
+      belief = updateBelief(prior, actual, n);
+      return { id: session.id, prior, actual, n, updated: belief };
+    });
   };
   const loadToRpe = (load, minutes) => {
     const duration = Number(minutes);
@@ -79,7 +89,7 @@
     const headers = rows.shift().map(header => header.trim().toLowerCase());
     return rows.map(cells => Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? ''])));
   };
-  const api = { CSV_HEADERS, calculateLoad, absoluteError, meanAbsoluteError, suggestLoad, loadToRpe, migrateLegacySession, stringifyCsv, parseCsv };
+  const api = { CSV_HEADERS, calculateLoad, absoluteError, meanAbsoluteError, updateBelief, beliefUpdates, loadToRpe, migrateLegacySession, stringifyCsv, parseCsv };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') window.CargaClaraDomain = api;
 })();

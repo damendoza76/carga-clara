@@ -8,7 +8,7 @@ Bitácora web, en español y pensada para celular, para pronosticar la carga de 
 - Permite cerrar la sesión con el RPE reportado por el deportista o alumno y la duración real.
 - Compara la carga pronosticada con la real y calcula el error absoluto en unidades `RPE × minutos`.
 - Mantiene historiales separados por persona y tipo de sesión.
-- Después de dos sesiones cerradas del mismo tipo para la misma persona, propone un RPE que representa la carga real media de hasta las últimas cinco sesiones dividida por los minutos previstos. La propuesta es descriptiva y el entrenador decide si la usa.
+- Con una o más sesiones cerradas del mismo tipo para la misma persona, recomienda una carga para la siguiente sesión usando la actualización recursiva `expectativa anterior + (1/n) × (carga real − expectativa anterior)`. `n` es el número de la sesión comparable y se usa todo el historial en orden cronológico. Por ejemplo, si la expectativa tras nueve sesiones es 400 y la décima carga real es 250, recomienda 385 para la siguiente. También convierte esa carga a un RPE para los minutos previstos.
 - Grafica carga pronosticada y real a lo largo del tiempo; incluye resúmenes por persona, exportación/importación CSV, respaldo JSON y guardado local.
 - Puede instalarse como PWA y conservar el armazón de la aplicación sin conexión tras la primera visita.
 
@@ -36,7 +36,7 @@ El CSV de Carga Clara usa las columnas `id`, `persona_id`, `persona`, `tipo_sesi
 
 ## Pruebas
 
-Con Node.js instalado, ejecuta `node --test domain.test.js` para revisar la carga de Foster, el error del pronóstico, la sugerencia de RPE, la migración y el intercambio CSV.
+Con Node.js instalado, ejecuta `node --test domain.test.js` para revisar la carga de Foster, la actualización de la expectativa, el error del pronóstico, la migración y el intercambio CSV.
 
 ## GitHub Pages
 

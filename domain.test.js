@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
-  calculateLoad, absoluteError, meanAbsoluteError, suggestLoad, loadToRpe,
+  calculateLoad, absoluteError, meanAbsoluteError, updateBelief, beliefUpdates, loadToRpe,
   migrateLegacySession, stringifyCsv, parseCsv, CSV_HEADERS
 } = require('./domain.js');
 
@@ -22,9 +22,18 @@ test('calculates absolute prediction error and mean absolute error', () => {
   assert.equal(meanAbsoluteError([]), null);
 });
 
-test('suggests one expected load from the most recent five sessions', () => {
-  assert.equal(suggestLoad([300]), null);
-  assert.deepEqual(suggestLoad([100, 200, 300, 400, 500, 600, 700]), { load: 500, count: 5 });
+test('updates the next-session belief with the requested recursive formula', () => {
+  assert.equal(updateBelief(400, 250, 10), 385);
+  assert.throws(() => updateBelief(400, 250, 1.5), RangeError);
+});
+
+test('uses the full comparable history and the session number in the update', () => {
+  const sessions = [...Array(9)].map((_, index) => ({ id: `s${index + 1}`, actualLoad: 400 }));
+  sessions.push({ id: 's10', actualLoad: 250 });
+  const updates = beliefUpdates(sessions);
+  assert.equal(updates.length, 10);
+  assert.deepEqual(updates[8], { id: 's9', prior: 400, actual: 400, n: 9, updated: 400 });
+  assert.deepEqual(updates[9], { id: 's10', prior: 400, actual: 250, n: 10, updated: 385 });
 });
 
 test('converts a suggested load into one RPE for the planned duration', () => {
